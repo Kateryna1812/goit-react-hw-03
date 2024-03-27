@@ -1,49 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import ContactForm from './components/ContactForm/ContactForm'
+import SearchBox from './components/SearchBox/SearchBox'
+import ContactList from './components/ContactList/ContactList'
 import './App.css'
-import Description from './components/Description/Description'
-import Feedback from './components/Feedback/Feedback'
-import Options from './components/Options/Options'
-import Notification from './components/Notification/Notification';
 
 function App() {
- const [clicks, setClicks] = useState(() => {
-    const savedClicks = JSON.parse(window.localStorage.getItem("saved-clicks"));
-    return savedClicks ? savedClicks : { good: 0, neutral: 0, bad: 0 };
+
+   const [contacts, setContacts] = useState(() => {
+    const savedContacts = window.localStorage.getItem('saved-contacts');
+    if (savedContacts) {
+      return JSON.parse(savedContacts);
+    }
+    return [];
   });
 
-  const totalFeedback = clicks.good + clicks.neutral + clicks.bad;
+  const addContact = newContact => {
+    setContacts(contacts => {
+      return [...contacts, newContact];
+    });
+  };
 
-  const updateFeedback = (feedbackType) => {
-    if (feedbackType === "reset") {
-      return setClicks({ good: 0, neutral: 0, bad: 0 });
-    }
+  const [filter, setFilter] = useState('');
 
-    setClicks({ ...clicks, [feedbackType]: clicks[feedbackType] + 1 });
+  const filterContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const deleteContact = contactId => {
+    setContacts(contacts => {
+      return contacts.filter(contact => contact.id !== contactId);
+    });
   };
 
   useEffect(() => {
-    window.localStorage.setItem("saved-clicks", JSON.stringify(clicks));
-  }, [clicks]);
+    window.localStorage.setItem('saved-contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  const positiveStatistics = Math.round(
-    ((clicks.good + clicks.neutral) / totalFeedback) * 100
-  );
 
   return (
     <>
-      <Description />
-      <Options updateFeedback={updateFeedback} totalFeedback={totalFeedback} />
-      {totalFeedback > 0 ? (
-        <Feedback
-        good={clicks.good}
-        neutral={clicks.neutral}
-        bad={clicks.bad}
-        totalFeedback={totalFeedback}
-        positiveStatistics={positiveStatistics}
+      <div>
+        <h1>Phonebook</h1>
+        <ContactForm onAddContact={addContact} />
+        <SearchBox value={filter} onSearch={setFilter} />
+        <ContactList
+          contacts={filterContacts}
+          onDeleteContact={deleteContact}
         />
-      ) : (
-        <Notification />
-      )}
+      </div>
     </>
   )
 }
